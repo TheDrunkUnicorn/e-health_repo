@@ -1,0 +1,101 @@
+
+OLD CHECK CONNECTION
+/////////////////////////////////////////////////////////////////////////////////////////////
+try {
+			String url = "jdbc:mysql://localhost:3306/e-health_schema";
+			String username = "root";
+			String password = "1111";
+			Connection connection = DriverManager.getConnection(url, username, password);
+			Statement statement = connection.createStatement();
+			ResultSet rSet= statement.executeQuery("SELECT 1"); 
+			if(!rSet.next()) {
+				System.out.println("No connection with DB");
+				return;
+			}
+			if(rSet.getString(1).toString().equals("1")) {
+				System.out.println("Database is online");
+			}
+			System.out.println(rSet.getString(1));
+			connection.close();
+		} catch (SQLException e) {
+			e.getMessage();
+			e.printStackTrace();
+		}
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+LOGIN CARD ELEMENTS
+//////////////////////////////////////////////////////////////////////////////////////////////
+JTextArea Login_textArea_Email = new JTextArea();
+		Login_textArea_Email.setFont(new Font("Tahoma", Font.PLAIN, 18));
+		Login_textArea_Email.setBounds(171, 64, 340, 47);
+		LoginCard.add(Login_textArea_Email);
+		
+		JLabel lblEmail = new JLabel("Email or phone number");
+		lblEmail.setFont(new Font("Tahoma", Font.PLAIN, 18));
+		lblEmail.setBounds(249, 10, 189, 47);
+		LoginCard.add(lblEmail);
+		
+		JLabel lblPassword = new JLabel("Password");
+		lblPassword.setFont(new Font("Tahoma", Font.PLAIN, 18));
+		lblPassword.setBounds(300, 129, 76, 47);
+		LoginCard.add(lblPassword);
+		
+		JLabel lblIncorrectData = new JLabel("");
+		lblIncorrectData.setHorizontalAlignment(SwingConstants.CENTER);
+		lblIncorrectData.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		lblIncorrectData.setBounds(171, 354, 340, 33);
+		LoginCard.add(lblIncorrectData);
+		
+		JTextArea Login_textArea_password = new JTextArea();
+		Login_textArea_password.setFont(new Font("Tahoma", Font.PLAIN, 18));
+		Login_textArea_password.setBounds(171, 186, 340, 47);
+		LoginCard.add(Login_textArea_password);
+		
+		JButton btnRestorePassword = new JButton("Forgot password?");
+		btnRestorePassword.setBounds(383, 243, 128, 21);
+		LoginCard.add(btnRestorePassword);
+		
+		JButton btnLoginButton = new JButton("Log in");/////////////////LOGIN//////////////////////////
+		btnLoginButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String log_email = Login_textArea_Email.getText();
+				String log_password = Login_textArea_password.getText();
+				
+				try {
+					Connection connection = DriverManager.getConnection(url, username, password);
+					String login_status = patientProfile.login(log_email, log_password, connection);
+					lblIncorrectData.setText(login_status);
+					if(login_status.equals("Correct")) {
+						CardLayout layout = (CardLayout)panel.getLayout();
+						layout.show(panel, "PatientProfileCard");
+						lblPP_patient_full_name.setText(patientProfile.get_patient_full_name(log_email, log_password, connection));
+						//lblPP_family_doctor_name.setText();
+						connection.close();
+					}
+				} catch (SQLException e2) {
+					e2.getMessage();
+					e2.printStackTrace();
+				}
+			}
+		});
+		btnLoginButton.setFont(new Font("Tahoma", Font.PLAIN, 18));
+		btnLoginButton.setBounds(171, 296, 340, 33);
+		LoginCard.add(btnLoginButton);
+		
+		JButton btnRegister = new JButton("Register");
+		btnRegister.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				CardLayout layout = (CardLayout)panel.getLayout();
+				layout.show(panel, "RegistrationCard");
+			}
+		});
+		btnRegister.setBounds(171, 243, 85, 21);
+		LoginCard.add(btnRegister);
+		
+		JCheckBox chckbxKeepLogged = new JCheckBox("Keep me logged in");
+		chckbxKeepLogged.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		chckbxKeepLogged.setBounds(517, 304, 128, 21);
+		chckbxKeepLogged.setBackground(Color.pink);
+		LoginCard.add(chckbxKeepLogged);
+		
+////////////////////////LOGIN CARD ELEMENTS///////////////////////////////////////////////
