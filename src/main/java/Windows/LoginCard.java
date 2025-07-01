@@ -16,23 +16,34 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
+
+import service.DB_Session_Manager;
+import service.Patient_DBQueryExecutor;
+
 
 public class LoginCard extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 	
 	private NavigationListener listener;
+	
+	private DB_Session_Manager session_manager;
+	
+	private Patient_DBQueryExecutor patient_DBQueryExecutor = new Patient_DBQueryExecutor();
 
 	/**
 	 * Create the panel.
 	 */
-	public LoginCard(NavigationListener listener) {
+	public LoginCard(NavigationListener listener, DB_Session_Manager session_manager) {
 		
 		this.listener = listener;
-		
+		this.session_manager = session_manager;
 		//////////////////////LOGIN CARD ELEMENTS/////////////////////////////
 		
 		setBackground(Color.pink);
+		setLayout( null );
 		
 		JTextArea Login_textArea_Email = new JTextArea();
 		Login_textArea_Email.setFont(new Font("Tahoma", Font.PLAIN, 18));
@@ -71,17 +82,17 @@ public class LoginCard extends JPanel {
 			String log_password = Login_textArea_password.getText();
 			
 			try {
-				Connection connection = DriverManager.getConnection(url, username, password);
-				String login_status = patientProfile.login(log_email, log_password, connection);
+				Session session = session_manager.getSession();
+				session.beginTransaction();
+				String login_status = patient_DBQueryExecutor.login(log_email, log_password, session);
 				lblIncorrectData.setText(login_status);
 				if(login_status.equals("Correct")) {
-					CardLayout layout = (CardLayout)panel.getLayout();
-					layout.show(panel, "PatientProfileCard");
-					lblPP_patient_full_name.setText(patientProfile.get_patient_full_name(log_email, log_password, connection));
-					//lblPP_family_doctor_name.setText();
-					connection.close();
+					listener.navigate_to("PatientProfileCard");
+					//lblPP_patient_full_name.setText(patientProfile.get_patient_full_name(log_email, log_password, session));//SET ON PATIENTS PAGE
+					session.close();
 				}
-			} catch (SQLException e2) {
+				
+			} catch (HibernateException e2) {
 				e2.getMessage();
 				e2.printStackTrace();
 			}
@@ -94,8 +105,7 @@ public class LoginCard extends JPanel {
 		JButton btnRegister = new JButton("Register");
 		btnRegister.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
-			CardLayout layout = (CardLayout)panel.getLayout();
-			layout.show(panel, "RegistrationCard");
+			listener.navigate_to("RegistrationCard");
 		}
 		});
 		btnRegister.setBounds(171, 243, 85, 21);
@@ -107,8 +117,19 @@ public class LoginCard extends JPanel {
 		chckbxKeepLogged.setBackground(Color.pink);
 		add(chckbxKeepLogged);
 		
+		JButton btnGoBack = new JButton("Go back");
+		btnGoBack.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (listener != null) {
+                    listener.navigate_to("MainCard"); // Call the listener to go back
+                }
+			}
+		});
+		btnGoBack.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		btnGoBack.setBounds(586, 26, 85, 21);
+		add(btnGoBack);
+		
 		////////////////////////LOGIN CARD ELEMENTS///////////////////////////////////////////////
 
 	}
-
 }

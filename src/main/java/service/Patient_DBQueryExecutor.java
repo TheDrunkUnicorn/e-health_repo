@@ -1,4 +1,4 @@
-package Windows;
+package service;
 
 import java.awt.CardLayout;
 import java.sql.Connection;
@@ -8,33 +8,40 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class PatientProfile {
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
+import org.hibernate.annotations.ParamDef;
+import org.hibernate.query.Query;
 
-	private String first_name;
-	private String last_name;
-	private String fathers_name;
+
+
+public class Patient_DBQueryExecutor {
 	
-	private String email;
-	private String phone_number;
-	private String password;
+	private DB_Session_Manager session_Manager;
 	
-	public PatientProfile() {};
+	public Patient_DBQueryExecutor() {};
 	
 //////////////////////// INHERITED FROM REGISTRATION_DATA_CHECK
 
 	
 ////////////////////////INHERITED FROM REGISTRATION_DATA_CHECK
 	
-	public PatientProfile(String first_name, String last_Name, String fathers_name, String email, String phone_number){
-		this.first_name = first_name;
-		this.last_name = last_Name;
-		this.fathers_name = fathers_name;
-		this.email = email;
-		this.phone_number = phone_number;
+	public Patient_DBQueryExecutor(DB_Session_Manager session_Manager){
+		this.session_Manager = session_Manager;
 	}
 	
 	public String get_full_name() {
+		try {
+			Session session = session_Manager.getSession();
+			session.beginTransaction();
+		Query<String> query = session.createQuery("SELECT p.password FROM Patient WHERE p.email = :emailParam OR p.phoneNumber = :phoneParam", String.class);
 		return this.first_name+" "+this.last_name+" "+this.fathers_name;
+		}
+		catch (HibernateException e) {
+			e.getMessage();
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public void set_full_name(String first_name, String last_name, String fathers_name) {
@@ -47,36 +54,45 @@ public class PatientProfile {
 		return false;
 	}
 	
-	public String login(String email, String password, Connection connection) {
+	public String login(String email, String password, Session session) {
 		try 
 		{
-			PreparedStatement pstatement = connection.prepareStatement("SELECT password FROM patient WHERE email = ? or phone_number = ?");
-			pstatement.setString(1,email); pstatement.setString(2,email);
-			ResultSet rSet = pstatement.executeQuery();
-			if(!rSet.next()) 
-			{
-				return "Incorrect login";
+			session.beginTransaction();
+			Query<String> checkLoginQuery = session.createQuery("SELECT password FROM Patient_Model WHERE email = :emailParam OR phone_number = :phoneParam", String.class);
+			checkLoginQuery.setParameter( "emailParam", email); checkLoginQuery.setParameter( "phoneParam", email);
+			String result = checkLoginQuery.uniqueResult();
+			if(result == null) { return "Incorrect login";}
+			else {
+				if(result.compareTo( password )==0) {return "Correct";}
+				else {return "Incorrect password";}
 			}
-			else 
-			{
-				PreparedStatement getPatientsNameAndContractNumber = connection.prepareStatement(
-						"SELECT patient.patient_first_name, patient.patient_last_name, patient.patient_fathers_name, "
-						+ "doctor.doctor_first_name, doctor.doctor_last_name, doctor.doctor_fathers_name FROM patient INNER JOIN doctor ON email = ? INNER JOIN ");
-				if(password.compareTo(rSet.getString(1))==0){
-					return "Correct";
-				}
-				else 
-				{
-					return "Incorrect password";
-				}
-			}
-			
-		} catch (SQLException e1) 
+		} catch (HibernateException e1) 
 		{
-			e1.getMessage();
-			e1.printStackTrace();
+			e1.getMessage(); e1.printStackTrace();
 		} 
-		return "error";
+		return "error";	
+//			PreparedStatement pstatement = connection.prepareStatement("SELECT password FROM patient WHERE email = ? or phone_number = ?");
+//			pstatement.setString(1,email); pstatement.setString(2,email);
+//			ResultSet rSet = pstatement.executeQuery();
+//			if(!rSet.next()) 
+//			{
+//				return "Incorrect login";
+//			}
+//			else 
+//			{
+//				PreparedStatement getPatientsNameAndContractNumber = connection.prepareStatement(
+//						"SELECT patient.patient_first_name, patient.patient_last_name, patient.patient_fathers_name, "
+//						+ "doctor.doctor_first_name, doctor.doctor_last_name, doctor.doctor_fathers_name FROM patient INNER JOIN doctor ON email = ? INNER JOIN ");
+//				if(password.compareTo(rSet.getString(1))==0){
+//					return "Correct";
+//				}
+//				else 
+//				{
+//					return "Incorrect password";
+//				}
+//			}
+			
+		
 	}
 	
 	public String get_patient_full_name(String email_or_phone, String password, Connection connection) throws SQLException {
